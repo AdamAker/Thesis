@@ -10,7 +10,7 @@ using SignalDecomposition
 println("running")
 
 #Load the Data into a dataframe
-ecgDataFrame = CSV.read("/home/adam/Desktop/ThesisCode/2020_06_04_T02_U00T_EEG01_EEGAccelTimetable.csv", DataFrame);
+ecgDataFrame = CSV.read("/home/adam/Desktop/ThesisData/2020_06_04_T02_U00T_EEG01_EEGAccelTimetable.csv", DataFrame);
 
 println("loading data into dataframe")
 
@@ -53,12 +53,16 @@ println("Downsampling data")
 ecgDataMatrixDownSampled1 = Float64[]
 timeDownSampled1 = Float64[]
 i=0
-while 2i+1<length(ecgDataMatrix)
-    push!(ecgDataMatrixDownSampled1, ecgDataMatrix[2i+1])
-    push!(timeDownSampled1, time[2i+1])
+while 8i+1<length(ecgDataMatrix)
+    push!(ecgDataMatrixDownSampled1, ecgDataMatrix[8i+1])
+    push!(timeDownSampled1, time[8i+1])
     global i += 1;
 end
 
+#Smoothing the Downsampled data using cubic splines
+splinedData = CubicSpline(vec(ecgDataMatrixDownSampled1),vec(timeDownSampled1))
+
+smoothedEcgData = splinedData[1:floor(Int,length(splinedData)/2),1]
 println("Averaging data")
 
 #Simple pointwise average of the data to try to remove noise
@@ -87,7 +91,7 @@ u = [x];
 polys = [];
 for i ∈ 0:5;
     for j∈ 0:i;
-        push!(polys, exp(-(u[1])^(2*i)))*sin(2*u[1])^j;
+        push!(polys, cos(u[1])^i*exp(-(u[1])^2)^j);
     end
 end
 
@@ -101,7 +105,8 @@ opt = STLSQ(λs)
 #problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, GaussianKernel())
 #problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, TriangularKernel())
 #problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, EpanechnikovKernel())
-problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, SilvermanKernel())
+#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, SilvermanKernel())
+problem = ContinuousDataDrivenProblem(smoothedEcgData', timeDownSampled1, EpanechnikovKernel())
 
 println("Solving the problem")
 #solve the problem
