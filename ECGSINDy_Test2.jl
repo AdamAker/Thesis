@@ -6,6 +6,7 @@ using Plots
 using CSV
 using DataFrames
 using SignalDecomposition
+using DynamicalSystems.jl
 
 println("running")
 
@@ -27,11 +28,19 @@ println("formating data")
 #format the data into a a "1 x length(ecgData)" Matrix type
 ecgDataMatrix = ecgDataFrame.ECG[startind:stopind]
 ecgDataMatrix = ecgDataMatrix'
+respDataMatrix = ecgDataFrame.Resp[startind:stopind]
+respDataMatrix = respDataMatrix'
 
 println("Scaling data")
 
 #Scale the data to be in mV
 ecgDataMatrix = ecgDataMatrix.*.001
+respDataMatrix = respDataMatrix.*.001
+
+#=
+I want to add respiration data as a control input and see what that gets 
+in terms of a model. Idea here is that breathing adjusts heart rate
+=#
 
 println("Creating the vector containing sample times")
 
@@ -65,6 +74,7 @@ splinedData = CubicSpline(vec(ecgDataMatrixDownSampled1),vec(timeDownSampled1))
 smoothedEcgData = splinedData[1:floor(Int,length(splinedData)/2),1]
 println("Averaging data")
 
+#=
 #Simple pointwise average of the data to try to remove noise
 ecgDataMatrixSimpleAvg = Float64[]
 timeSimpleAvg = Float64[]
@@ -74,6 +84,7 @@ while i<length(ecgDataMatrix)
     push!(timeSimpleAvg, (time[i]+time[i+1])/2)
     global i += 1;
 end
+=#
 
 #println("plotting data")
 
