@@ -6,7 +6,7 @@ using Plots
 using CSV
 using DataFrames
 using SignalDecomposition
-using DynamicalSystems.jl
+using DynamicalSystems
 
 println("running")
 
@@ -37,10 +37,6 @@ println("Scaling data")
 ecgDataMatrix = ecgDataMatrix.*.001
 respDataMatrix = respDataMatrix.*.001
 
-#=
-I want to add respiration data as a control input and see what that gets 
-in terms of a model. Idea here is that breathing adjusts heart rate
-=#
 
 println("Creating the vector containing sample times")
 
@@ -55,6 +51,14 @@ for i∈2:length(ecgDataMatrix)
     push!(time,time[i-1]+1/Samplerate)
 end
 
+#=
+Applying a filter to the data which compares two data points at positions i and 
+i+1 respectively, calculates their vertical distance from one another and if 
+it is less than ε, then it averages the two points and stores the result in 
+position i. Otherwise, it does nothing.    
+=#
+
+#=
 println("Downsampling data")
 
 
@@ -68,12 +72,13 @@ while 8i+1<length(ecgDataMatrix)
     global i += 1;
 end
 
+
 #Smoothing the Downsampled data using cubic splines
 splinedData = CubicSpline(vec(ecgDataMatrixDownSampled1),vec(timeDownSampled1))
 
 smoothedEcgData = splinedData[1:floor(Int,length(splinedData)/2),1]
 println("Averaging data")
-
+=#
 #=
 #Simple pointwise average of the data to try to remove noise
 ecgDataMatrixSimpleAvg = Float64[]
@@ -92,38 +97,3 @@ end
 #plot(time, ecgDataMatrix', label="ECG (mV) vs time(s)")
 #xlabel!("Time (s)")
 #ylabel!("ECG (mV)")
-
-println("creating library")
-
-
-#Create the library
-@variables x;
-u = [x];
-polys = [];
-for i ∈ 0:5;
-    for j∈ 0:i;
-        push!(polys, cos(u[1])^i*exp(-(u[1])^2)^j);
-    end
-end
-
-basis = Basis(polys, u);
-
-println("Setting up the problem")
-#Create the model 
-sampler = DataSampler(Split(ratio = 0.8),Batcher(n=10, shuffle = true, repeated =true))
-λs = exp10.(-10:0.1:-1)
-opt = STLSQ(λs)
-#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, GaussianKernel())
-#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, TriangularKernel())
-#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, EpanechnikovKernel())
-#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, SilvermanKernel())
-problem = ContinuousDataDrivenProblem(smoothedEcgData', timeDownSampled1, EpanechnikovKernel())
-
-println("Solving the problem")
-#solve the problem
-res = solve(problem, basis, opt, sampler = sampler)
-
-#Display model results
-println(res)
-println(result(res))
-println(res.parameters)

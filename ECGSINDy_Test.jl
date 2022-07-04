@@ -6,46 +6,42 @@ using Plots
 using CSV
 using DataFrames
 using SignalDecomposition
+using DynamicalSystems
 
-#Load the Data into a dataframe
-ecgDataFrame = CSV.read("/home/adam/Desktop/ThesisData/2020_06_04_T02_U00T_EEG01_EEGAccelTimetable.csv", DataFrame);
+#=
+I want to add respiration data as a control input and see what that gets 
+in terms of a model. Idea here is that breathing adjusts heart rate
+=#
 
-variables = names(ecgDataFrame);
-
-findall(occursin.("ECG",variables));
-startind = 51001;
-stopind = 51500;
-#format the data into a vector
-ecgData = ecgDataFrame.ECG[startind:stopind];
-
-DecgData = ecgData;
-
-#approximate derivative by choppin off last data point of "DecgData" and first of "ecgData"
-popfirst!(ecgData);
-pop!(DecgData);
+println("creating library")
 
 #Create the library
-@variables x;
+@parameters t
+@variables x(t);
 u = [x];
 polys = [];
-for i ∈ 0:3;
+for i ∈ 0:5;
     push!(polys, u[1]^i);
 end
 
 basis = Basis(polys, u);
 
-#Now setup the optimiser
-maxiter = 100;
-c_error = 1e-3;
-
+println("Setting up the problem")
 #Create the model 
-ecgDataMatrix = ecgData[:,:]
-ecgDataMatrix = ecgDataMatrix'
-DecgDataMatrix = DecgData[:,:]
-DecgDataMatrix = DecgDataMatrix'
-problem = DirectDataDrivenProblem(ecgDataMatrix,DecgDataMatrix, name = :Test)
+sampler = DataSampler(Split(ratio = 0.8),Batcher(n=10, shuffle = true, repeated =true))
+λs = exp10.(-10:0.1:-1)
+opt = STLSQ(λs)
+#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, GaussianKernel())
+#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, TriangularKernel())
+#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, EpanechnikovKernel())
+#problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, SilvermanKernel())
+problem = ContinuousDataDrivenProblem(smoothedEcgData', timeDownSampled1, EpanechnikovKernel())
 
-res = solve(problem,basis,STLSQ())
+println("Solving the problem")
+#solve the problem
+res = solve(problem, basis, opt, sampler = sampler)
+
+#Display model results
 println(res)
 println(result(res))
 println(res.parameters)
