@@ -20,8 +20,8 @@ println("loading data into dataframe")
 #variables = names(ecgDataFrame);
 
 #select the data range, these are indicies not times
-startind = 50001;
-stopind = 55000;
+startind = 50451;
+stopind = 50951;
 
 println("formating data")
 
@@ -52,11 +52,39 @@ for i∈2:length(ecgDataMatrix)
 end
 
 #=
-Applying a filter to the data which compares two data points at positions i and 
-i+1 respectively, calculates their vertical distance from one another and if 
-it is less than ε, then it averages the two points and stores the result in 
-position i. Otherwise, it does nothing.    
+Applying a filter to the data which calculates the averge of a window
+of windowSize    
 =#
+
+println("Filtering Data")
+
+
+ecgDataMatrixFiltered = Float64[]
+timesFiltered = Float64[]
+i=1
+ε = .25
+windowSize = 50
+while i+windowSize <= length(ecgDataMatrix)
+    windowAvg = 0
+    for j∈i:i+windowSize
+        windowAvg = windowAvg+ecgDataMatrix[j];
+    end
+    windowAvg = windowAvg/windowSize;
+    if abs(ecgDataMatrix[i]-windowAvg)<ε
+        push!(ecgDataMatrixFiltered, windowAvg)
+        push!(timesFiltered, time[i])
+        global i += 1;
+    else
+        push!(ecgDataMatrixFiltered, ecgDataMatrix[i])
+        push!(timesFiltered, time[i])
+        global i += 1;
+    end
+end
+
+#Smoothing the Downsampled data using cubic splines
+splinedData = CubicSpline(vec(ecgDataMatrixFiltered),vec(timesFiltered))
+
+smoothedEcgData = splinedData[1:floor(Int,length(splinedData)/2),1]
 
 #=
 println("Downsampling data")
@@ -91,9 +119,10 @@ while i<length(ecgDataMatrix)
 end
 =#
 
-#println("plotting data")
+println("plotting data")
 
 #plot the data
-#plot(time, ecgDataMatrix', label="ECG (mV) vs time(s)")
-#xlabel!("Time (s)")
-#ylabel!("ECG (mV)")
+plot(time, ecgDataMatrix', label="Original", title="ECG (mV) vs time(s)")
+xlabel!("Time (s)")
+ylabel!("ECG (mV)")
+plot!(timesFiltered, ecgDataMatrixFiltered, label="Filtered")
