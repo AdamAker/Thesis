@@ -107,6 +107,47 @@ plot(
 
 #Model parameters fit to the statistics
 
+#=First seach modelParameters to find the model with the most parameters, then 
+we'll make a matrix of size "maxiter x maxparamsize" so that each column of
+the matrix will be a a series of values for a parameter.=#
+
+maxparamsize = 0
+for i∈1:maxiter
+    paramsize = length(modelParameters[i]) 
+    if paramsize > maxparamsize
+        maxparamsize = paramsize
+    end
+end
+
+modelParamMatrix = zeros(maxiter,maxparamsize)
+
+for i∈1:maxparamsize
+    for j∈1:maxiter
+        try
+            modelParamMatrix[j,i] = modelParameters[j][i]
+        catch
+            modelParamMatrix[j,i] = 0
+        end
+    end
+end
+
+paramPlots = []
+for i∈1:maxparamsize
+    fitparam = fit(Normal, modelParamMatrix[:,i])
+    μparam = fitparam.μ[1]
+    strμparam = @sprintf("%.2e",μparam)
+    σparam = fitparam.σ[1]
+    strσparam = @sprintf("%.2e",σparam)
+    pplt = scatter(modelParamMatrix[:,i], (1/(fitparam.σ*sqrt(2*π))).*exp.(-(1/(2*fitparam.σ)^2)*(modelParamMatrix[:,i].-fitparam.μ).^2))
+    plot!(x->pdf(fitparam,x))
+    title!("Parameter "*string(i)*": μ = "*strμparam*" σ = "*strσparam)
+    ylabel!("Normalized PDF")
+    xlabel!("Parameter "*string(i)*" value")
+    push!(paramPlots, pplt)
+end
+
+
+
 #Display model results
 #=
 println(res)
