@@ -1,0 +1,43 @@
+---
+title : Test Report
+author : Adam Aker
+date : `j import Dates; Dates.Date(Dates.now())`
+header-includes: |
+    \usepackage{xltxtra}
+---
+
+
+`j include("DataPreProcessing1.jl")`
+`j include("ECGSINDy_Test.jl")`
+
+# Section 1: Data Pre-processing
+
+## Section 1.1: 
+![Filtered time-series](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/dataPlot.png){width=75% height=75%}
+
+![Phase diagram](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/phasePlot.png){width=75% height=75%}
+
+\pagebreak
+# Section 2: The Model
+
+## Section 2.1: Performance Metrics
+![Performance metrics](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/performancePlots.png){width=75% height=75%}
+
+
+## Section 2.2: Model Parameters
+```julia
+ println(Equations[length(Equations)])
+ ```
+ 
+![Parameter 1 ](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/parametersPlot1.png){width=50% height=50%}
+![Parameter 2 ](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/parametersPlot2.png){width=50% height=50%}
+![Parameter 3 ](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/parametersPlot3.png){width=50% height=50%}
+![Parameter 4 ](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/parametersPlot4.png){width=50% height=50%}
+![Parameter 5 ](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/parametersPlot5.png){width=50% height=50%}
+![Parameter 6 ](/Users/adamaker/Desktop/Research/Thesis/ThesisReports/parametersPlot6.png){width=50% height=50%}
+
+
+
+
+
+

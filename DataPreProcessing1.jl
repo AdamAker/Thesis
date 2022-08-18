@@ -8,10 +8,15 @@ using DataFrames
 using SignalDecomposition
 using DynamicalSystems
 
+savedir = "/Users/adamaker/Desktop/Research/Thesis/ThesisReports/"
+
 println("running")
 
 #Load the Data into a dataframe
-ecgDataFrame = CSV.read("/home/adam/Desktop/ThesisData/2020_06_04_T02_U00T_EEG01_EEGAccelTimetable.csv", DataFrame);
+#Linux machine source
+#ecgDataFrame = CSV.read("/home/adam/Desktop/ThesisData/2020_06_04_T02_U00T_EEG01_EEGAccelTimetable.csv", DataFrame);
+#MacOS machine source
+ecgDataFrame = CSV.read("/Users/adamaker/Desktop/Research/Thesis/ThesisData/2020_06_04_T02_U00T_EEG01_EEGAccelTimetable.csv", DataFrame)
 
 println("loading data into dataframe")
 
@@ -22,7 +27,10 @@ println("loading data into dataframe")
 #select the data range, these are indicies not times
 startind = 50451;
 stopind = 50951;
-
+#startind = 50451;
+#stopind = 52951;
+#startind = 1;
+#stopind = length(ecgDataFrame.ECG)
 println("formating data")
 
 #format the data into a a "1 x length(ecgData)" Matrix type
@@ -122,7 +130,8 @@ end
 println("plotting data")
 
 #plot the data
-plot(time, ecgDataMatrix', label="Original", title="ECG (mV) vs time(s)")
+dataPlot = plot(time, ecgDataMatrix', label="Original", title="ECG (mV) vs time(s)")
 xlabel!("Time (s)")
 ylabel!("ECG (mV)")
 plot!(timesFiltered, ecgDataMatrixFiltered, label="Filtered")
+savefig(dataPlot, savedir*"dataPlot.png")

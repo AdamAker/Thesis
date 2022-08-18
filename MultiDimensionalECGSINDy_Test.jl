@@ -20,20 +20,16 @@ println("creating library")
 
 #Create the library
 @parameters t;
-@variables x;
-x = [x];
-polys = [];
-for i∈0:3;
-    for j∈0:3
-        push!(polys, x[1].^i*exp(-x[1].^(2*j)))
-    end
-end
+@variables x[1:2];
+x = collect(x);
+h = Num[ exp.(-x[1].^(2)) ;exp.(-x[2].^(2));polynomial_basis(x,5)];
 
-basis = Basis(polys,x);
+
+basis = Basis(h,x);
 
 println("Setting up the problem")
 #Create the model 
-sampler = DataSampler(Split(ratio = 0.8),Batcher(n=10, shuffle = true, repeated =true))
+sampler = DataSampler(Split(ratio = 0.8),Batcher(n=5, shuffle = true, repeated =true))
 λs = exp10.(-10:0.1:-1)
 opt = STLSQ(λs)
 #problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, GaussianKernel())
@@ -41,8 +37,9 @@ opt = STLSQ(λs)
 #problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, EpanechnikovKernel())
 #problem = ContinuousDataDrivenProblem(ecgDataMatrixDownSampled1', timeDownSampled1, SilvermanKernel())
 problem = ContinuousDataDrivenProblem(smoothedEcgData', timesFiltered)
+problem2D = ContinuousDataDrivenProblem([problem.X;problem.DX], timesFiltered)
 
-phasePlot = plot(problem.X',problem.DX', label = "Attractor",title = "Phase Diagram",xlim=(-2.8,-2.3),ylim=(-15,15))
+phasePlot = plot(problem.X',problem.DX', label = "Attractor",title = "Phase Diagram")
 xlabel!("Time Series")
 ylabel!("Derivative")
 savefig(phasePlot, savedir*"phasePlot.png")
@@ -62,26 +59,17 @@ println("Solving the problem using Ensemble SINDy")
 #solve the problem
 maxiter = 100
 modelParameters = []
-modelBasis = []
 performanceL₂norm = Float64[]
 performanceAIC = Float64[]
 performanceR² = Float64[]
 for i∈1:maxiter
-    local res = solve(problem, basis, opt, sampler = sampler)
-    push!(modelBasis,result(res))
+    local res = solve(problem2D, basis, opt, sampler = sampler)
+    
     resultsDict = metrics(res)
     push!(modelParameters, res.parameters)
     push!(performanceL₂norm, resultsDict[:L₂][1])
     push!(performanceAIC, resultsDict[:AIC][1])
     push!(performanceR², resultsDict[:R²][1])
-end
-
-Equations = []
-push!(Equations, modelBasis[6].eqs[1])
-for i∈1:maxiter
-    if !(modelBasis[i].eqs[1]∈Equations)
-        push!(Equations, modelBasis[i].eqs[1])
-    end
 end
 
 #=
